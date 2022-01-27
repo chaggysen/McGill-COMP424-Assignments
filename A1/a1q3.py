@@ -89,6 +89,9 @@ def get_distance(path):
 
 
 def get_neighbors(current_path):
+    """
+    https://towardsdatascience.com/how-to-implement-the-hill-climbing-algorithm-in-python-1c65c29469de
+    """
     pass
 
 

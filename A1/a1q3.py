@@ -88,6 +88,14 @@ def get_distance(path):
     return distance
 
 
+def get_neighbors(current_path):
+    pass
+
+
+def get_best_neighbor(neighbors):
+    pass
+
+
 def tsp_hill_climbing(cities):
     """
     Hill climbing algorithm

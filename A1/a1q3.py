@@ -2,6 +2,7 @@ from math import sqrt
 from itertools import permutations
 import numpy as np
 import matplotlib.pyplot as plt
+import random
 
 
 def generate_tsp_instance(n):
@@ -61,6 +62,54 @@ def tsp_solver_brute_force(cities, source=0):
     return [MIN_LEN, path_list]
 
 
+def random_path(cities):
+    """
+    Generate a random tsp path for input cities
+    """
+    path = []
+    origin = cities[0]
+    path.append(origin)
+    cities.remove(origin)
+    while cities:
+        random_city = cities[random.randint(0, len(cities) - 1)]
+        path.append(random_city)
+        cities.remove(random_city)
+    path.append(origin)
+    return path
+
+
+def get_distance(path):
+    """
+    Get the total distance of a path
+    """
+    distance = 0
+    for i in range(len(path) - 1):
+        distance += euclidean_distance(path[i], path[i + 1])
+    return distance
+
+
+def tsp_hill_climbing(cities):
+    """
+    Hill climbing algorithm
+    """
+    current_path = random_path(cities)
+    current_distance = get_distance(cities)
+
+    neighbors = get_neighbors(current_path)
+    best_neighbor = get_best_neighbor(neighbors)
+    best_neighbor_distance = get_distance(best_neighbor)
+
+    while best_neighbor_distance < current_distance:
+        # update current path and distance
+        current_path = best_neighbor
+        current_distance = best_neighbor_distance
+
+        neighbors = get_neighbors(current_path)
+        best_neighbor = get_best_neighbor(neighbors)
+        best_neighbor_distance = get_distance(best_neighbor)
+    return current_distance, current_path
+
+
 def plot_cities_and_path(path):
     """
     Plot the cities and the path
@@ -84,18 +133,28 @@ def calculate_stats(distances):
 
 
 def main():
-    # distances = []
-    # for _ in range(100):
-    cities = generate_tsp_instance(7)
-    print("========== ORIGINAL CITIES ==========")
-    print(cities)
-    d, path = tsp_solver_brute_force(cities)
-    print("========== SOLUTIONS ==========")
-    print(d)
-    print(path)
-    # distances.append(d)
-    # print(calculate_stats(distances))
-    plot_cities_and_path(path)
+    optimal_distances = []
+    ai_distances = []
+    optimal_ai_output_count = 0
+    for _ in range(100):
+        cities = generate_tsp_instance(7)
+        print("========== ORIGINAL CITIES ==========")
+        print(cities)
+        optimal_d, optimal_path = tsp_solver_brute_force(cities)
+        print("========== OPTIMAL SOLUTIONS ==========")
+        print(optimal_d)
+        print(optimal_path)
+        optimal_distances.append(optimal_d)
+        ai_d, ai_path = tsp_hill_climbing(cities)
+        print("========== AI SOLUTIONS ==========")
+        print(ai_d)
+        print(ai_path)
+        if optimal_d == ai_d:
+            optimal_ai_output_count += 1
+    print("========== OPTIMAL SOLUTIONS STATS ==========")
+    print("========== AI SOLUTIONS STATS ==========")
+    print(calculate_stats(optimal_distances))
+    # plot_cities_and_path(path)
 
 
 if __name__ == "__main__":

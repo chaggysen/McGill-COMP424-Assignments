@@ -26,40 +26,25 @@ def euclidean_distance(city1, city2):
     return sqrt((delta_x ** 2) + (delta_y ** 2))
 
 
-def tsp_solver_brute_force(cities, source=0):
+def tsp_solver_brute_force(cities):
     """
     A brute force TSP solver using the first city as source
     """
     # data validation
     if cities is None or len(cities) == 0:
         return 0
-
-    # build destination list
-    destinations = []
-    for i in range(len(cities)):
-        if i != source:
-            destinations.append(cities[i])
-
-    source_city = cities[source]
     MIN_LEN = float("inf")
     optimal_path = None
 
     # Generate permutations
-    next_permutation = permutations(destinations)
-    current_city = source_city
+    next_permutation = permutations(cities)
     for perm in list(next_permutation):
-        current_distance = 0
-        for city in perm:
-            current_distance += euclidean_distance(city, current_city)
-            current_city = city
-        current_distance += euclidean_distance(current_city, source_city)
+        current_distance = get_distance(perm)
+        current_distance += euclidean_distance(perm[-1], perm[0])
         if current_distance < MIN_LEN:
             MIN_LEN = current_distance
             optimal_path = perm
-    path_list = list(optimal_path)
-    path_list.insert(0, source_city)
-    path_list.append(source_city)
-    return [MIN_LEN, path_list]
+    return [MIN_LEN, optimal_path]
 
 
 def random_path(cities):
@@ -92,11 +77,23 @@ def get_neighbors(current_path):
     """
     https://towardsdatascience.com/how-to-implement-the-hill-climbing-algorithm-in-python-1c65c29469de
     """
-    pass
+    neighbors = []
+    for city1_idx in range(1, len(current_path) - 1):
+        for city2_idx in range(city1_idx + 1, len(current_path) - 1):
+            new_neighbor = current_path.copy()
+            new_neighbor[city1_idx] = current_path[city2_idx]
+            new_neighbor[city2_idx] = current_path[city1_idx]
+            neighbors.append(new_neighbor)
+    return neighbors
 
 
 def get_best_neighbor(neighbors):
-    pass
+    min_distance = get_distance(neighbors[0])
+    best_neighbor = neighbors[0]
+    for neighbor in neighbors:
+        if get_distance(neighbor) < min_distance:
+            best_neighbor = neighbor
+    return best_neighbor
 
 
 def tsp_hill_climbing(cities):
@@ -104,7 +101,7 @@ def tsp_hill_climbing(cities):
     Hill climbing algorithm
     """
     current_path = random_path(cities)
-    current_distance = get_distance(cities)
+    current_distance = get_distance(current_path)
 
     neighbors = get_neighbors(current_path)
     best_neighbor = get_best_neighbor(neighbors)
@@ -148,24 +145,28 @@ def main():
     ai_distances = []
     optimal_ai_output_count = 0
     for _ in range(100):
+        print("=======================================================================")
         cities = generate_tsp_instance(7)
         print("========== ORIGINAL CITIES ==========")
         print(cities)
-        optimal_d, optimal_path = tsp_solver_brute_force(cities)
         print("========== OPTIMAL SOLUTIONS ==========")
+        optimal_d, optimal_path = tsp_solver_brute_force(cities)
         print(optimal_d)
         print(optimal_path)
         optimal_distances.append(optimal_d)
-        ai_d, ai_path = tsp_hill_climbing(cities)
         print("========== AI SOLUTIONS ==========")
+        ai_d, ai_path = tsp_hill_climbing(cities)
+        ai_distances.append(ai_d)
         print(ai_d)
         print(ai_path)
         if optimal_d == ai_d:
             optimal_ai_output_count += 1
     print("========== OPTIMAL SOLUTIONS STATS ==========")
-    print("========== AI SOLUTIONS STATS ==========")
     print(calculate_stats(optimal_distances))
-    # plot_cities_and_path(path)
+    print("========== AI SOLUTIONS STATS ==========")
+    print(calculate_stats(ai_distances))
+    print("========== AI FOUND OPTIMAL SOLUTION COUNT ==========")
+    print(optimal_ai_output_count)
 
 
 if __name__ == "__main__":

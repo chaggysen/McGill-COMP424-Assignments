@@ -40,7 +40,6 @@ def tsp_solver_brute_force(cities):
     next_permutation = permutations(cities)
     for perm in list(next_permutation):
         current_distance = get_distance(perm)
-        current_distance += euclidean_distance(perm[-1], perm[0])
         if current_distance < MIN_LEN:
             MIN_LEN = current_distance
             optimal_path = perm
@@ -52,14 +51,10 @@ def random_path(cities):
     Generate a random tsp path for input cities
     """
     path = []
-    origin = cities[0]
-    path.append(origin)
-    cities.remove(origin)
     while cities:
         random_city = cities[random.randint(0, len(cities) - 1)]
         path.append(random_city)
         cities.remove(random_city)
-    path.append(origin)
     return path
 
 
@@ -70,7 +65,7 @@ def get_distance(path):
     distance = 0
     for i in range(len(path) - 1):
         distance += euclidean_distance(path[i], path[i + 1])
-    return distance
+    return distance + euclidean_distance(path[-1], path[0])
 
 
 def get_neighbors(current_path):
@@ -78,8 +73,8 @@ def get_neighbors(current_path):
     https://towardsdatascience.com/how-to-implement-the-hill-climbing-algorithm-in-python-1c65c29469de
     """
     neighbors = []
-    for city1_idx in range(1, len(current_path) - 1):
-        for city2_idx in range(city1_idx + 1, len(current_path) - 1):
+    for city1_idx in range(len(current_path)):
+        for city2_idx in range(len(current_path)):
             new_neighbor = current_path.copy()
             new_neighbor[city1_idx] = current_path[city2_idx]
             new_neighbor[city2_idx] = current_path[city1_idx]
@@ -145,7 +140,7 @@ def main():
     ai_distances = []
     optimal_ai_output_count = 0
     for _ in range(100):
-        print("=======================================================================")
+        print("======================================================================================================================")
         cities = generate_tsp_instance(7)
         print("========== ORIGINAL CITIES ==========")
         print(cities)
@@ -159,7 +154,7 @@ def main():
         ai_distances.append(ai_d)
         print(ai_d)
         print(ai_path)
-        if optimal_d == ai_d:
+        if int(optimal_d) == int(ai_d):
             optimal_ai_output_count += 1
     print("========== OPTIMAL SOLUTIONS STATS ==========")
     print(calculate_stats(optimal_distances))

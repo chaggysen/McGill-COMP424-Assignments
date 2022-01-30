@@ -1,5 +1,6 @@
 from math import sqrt
 from itertools import permutations
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 import random
@@ -10,8 +11,8 @@ def generate_tsp_instance(n):
     Generate a TSP of n cities
     """
     cities = [None for _ in range(n)]
-    random_x = np.random.randint(1000, size=n)
-    random_y = np.random.randint(1000, size=n)
+    random_x = np.random.random(size=n) 
+    random_y = np.random.random(size=n)
     for i in range(n):
         cities[i] = (random_x[i], random_y[i])
     return cities
@@ -33,16 +34,14 @@ def tsp_solver_brute_force(cities):
     # data validation
     if cities is None or len(cities) == 0:
         return 0
-    MIN_LEN = float("inf")
-    optimal_path = None
+    MIN_LEN, optimal_path= float("inf"), None
 
     # Generate permutations
     next_permutation = permutations(cities)
     for perm in list(next_permutation):
         current_distance = get_distance(perm)
         if current_distance < MIN_LEN:
-            MIN_LEN = current_distance
-            optimal_path = perm
+            MIN_LEN, optimal_path = current_distance, perm
     return [MIN_LEN, optimal_path]
 
 
@@ -67,18 +66,30 @@ def get_distance(path):
         distance += euclidean_distance(path[i], path[i + 1])
     return distance + euclidean_distance(path[-1], path[0])
 
+def tsp_random_solver(cities):
+    path = random_path(cities)
+    distance = get_distance(path)
+    return [distance, path]
+
 
 def get_neighbors(current_path):
     """
-    https://towardsdatascience.com/how-to-implement-the-hill-climbing-algorithm-in-python-1c65c29469de
+    Get all neighbours of a current path. 
     """
     neighbors = []
-    for city1_idx in range(len(current_path)):
-        for city2_idx in range(len(current_path)):
-            new_neighbor = current_path.copy()
-            new_neighbor[city1_idx] = current_path[city2_idx]
-            new_neighbor[city2_idx] = current_path[city1_idx]
-            neighbors.append(new_neighbor)
+    for i in range(len(current_path)- 1):
+        for k in range(i + 1, len(current_path)):
+            neighbor = []
+            # take route[0] to route[i-1] and add them in order to new_route
+            for idx in range(i):
+                neighbor.append(current_path[idx])
+            # take route[i] to route[k] and add them in reverse order to new_route
+            for idx in range(k, i - 1, -1):
+                neighbor.append(current_path[idx])
+            # take route[k+1] to end and add them in order to new_route
+            for idx in range(k + 1, len(current_path)):
+                neighbor.append(current_path[idx])
+            neighbors.append(neighbor)
     return neighbors
 
 
@@ -86,17 +97,17 @@ def get_best_neighbor(neighbors):
     min_distance = get_distance(neighbors[0])
     best_neighbor = neighbors[0]
     for neighbor in neighbors:
-        if get_distance(neighbor) < min_distance:
-            best_neighbor = neighbor
+        distance = get_distance(neighbor)
+        if distance < min_distance:
+            best_neighbor, min_distance = neighbor, distance
     return best_neighbor
 
 
-def tsp_hill_climbing(cities):
+def tsp_hill_climbing(starting_path, starting_distance):
     """
     Hill climbing algorithm
     """
-    current_path = random_path(cities)
-    current_distance = get_distance(current_path)
+    current_path, current_distance = starting_path, starting_distance
 
     neighbors = get_neighbors(current_path)
     best_neighbor = get_best_neighbor(neighbors)
@@ -134,35 +145,65 @@ def calculate_stats(distances):
     stats["std"] = np.std(distances)
     return stats
 
+def run_tsp(nb_cities_per_tsp):
+    optimal_distances, random_distances, ai_distances = [], [], []
+    optimal_ai_output_count, optimal_random_output_count = 0, 0
 
-def main():
-    optimal_distances = []
-    ai_distances = []
-    optimal_ai_output_count = 0
     for _ in range(100):
         print("======================================================================================================================")
-        cities = generate_tsp_instance(7)
+        cities = generate_tsp_instance(nb_cities_per_tsp)
+
+        # print generated tsp 
         print("========== ORIGINAL CITIES ==========")
         print(cities)
-        print("========== OPTIMAL SOLUTIONS ==========")
-        optimal_d, optimal_path = tsp_solver_brute_force(cities)
-        print(optimal_d)
-        print(optimal_path)
-        optimal_distances.append(optimal_d)
+
+        if nb_cities_per_tsp < 10:
+            # print the optimal solution using brute force
+            print("========== OPTIMAL SOLUTION ==========")
+            optimal_d, optimal_path = tsp_solver_brute_force(cities.copy())
+            print(f"optimal distance: {optimal_d}")
+            print(f"optimal path: {optimal_path}")
+            optimal_distances.append(optimal_d)
+
+        # print a random solution
+        print("========== RANDOM SOLUTION ==========")
+        random_d, random_path = tsp_random_solver(cities.copy())
+        print(f"random distance: {random_d}")
+        print(f"random path: {random_path}")
+        random_distances.append(random_d)
+
+        # print the ai solution
         print("========== AI SOLUTIONS ==========")
-        ai_d, ai_path = tsp_hill_climbing(cities)
+        ai_d, ai_path = tsp_hill_climbing(random_path, random_d)
+        print(f"ai distance: {ai_d}")
+        print(f"ai path: {ai_path}")
         ai_distances.append(ai_d)
-        print(ai_d)
-        print(ai_path)
-        if int(optimal_d) == int(ai_d):
+
+        if nb_cities_per_tsp < 10 and math.isclose(optimal_d, ai_d, abs_tol=0.01):
             optimal_ai_output_count += 1
-    print("========== OPTIMAL SOLUTIONS STATS ==========")
-    print(calculate_stats(optimal_distances))
+        if nb_cities_per_tsp < 10 and math.isclose(optimal_d, random_d, abs_tol=0.01):
+            optimal_random_output_count += 1
+    
+    print("======================================== FINAL STATS =========================================")
+    if nb_cities_per_tsp < 10:
+        print("========== OPTIMAL SOLUTIONS STATS ==========")
+        print(calculate_stats(optimal_distances))
+    print("========== RANDOM SOLUTIONS STATS ==========")
+    print(calculate_stats(random_distances))
     print("========== AI SOLUTIONS STATS ==========")
     print(calculate_stats(ai_distances))
-    print("========== AI FOUND OPTIMAL SOLUTION COUNT ==========")
-    print(optimal_ai_output_count)
+    if nb_cities_per_tsp < 10:
+        print("========== RANDOM FOUND OPTIMAL SOLUTION COUNT ==========")
+        print(optimal_random_output_count)
+        print("========== AI FOUND OPTIMAL SOLUTION COUNT ==========")
+        print(optimal_ai_output_count)
 
+
+
+
+def main():
+    # will run brute force solution if number of city < 10
+    run_tsp(7)
 
 if __name__ == "__main__":
     main()

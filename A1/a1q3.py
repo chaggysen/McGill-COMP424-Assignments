@@ -11,7 +11,7 @@ def generate_tsp_instance(n):
     Generate a TSP of n cities
     """
     cities = [None for _ in range(n)]
-    random_x = np.random.random(size=n) 
+    random_x = np.random.random(size=n)
     random_y = np.random.random(size=n)
     for i in range(n):
         cities[i] = (random_x[i], random_y[i])
@@ -34,7 +34,7 @@ def tsp_solver_brute_force(cities):
     # data validation
     if cities is None or len(cities) == 0:
         return 0
-    MIN_LEN, optimal_path= float("inf"), None
+    MIN_LEN, optimal_path = float("inf"), None
 
     # Generate permutations
     next_permutation = permutations(cities)
@@ -66,6 +66,7 @@ def get_distance(path):
         distance += euclidean_distance(path[i], path[i + 1])
     return distance + euclidean_distance(path[-1], path[0])
 
+
 def tsp_random_solver(cities):
     path = random_path(cities)
     distance = get_distance(path)
@@ -77,7 +78,7 @@ def get_neighbors(current_path):
     Get all neighbours of a current path. 
     """
     neighbors = []
-    for i in range(len(current_path)- 1):
+    for i in range(len(current_path) - 1):
         for k in range(i + 1, len(current_path)):
             neighbor = []
             # take route[0] to route[i-1] and add them in order to new_route
@@ -145,6 +146,7 @@ def calculate_stats(distances):
     stats["std"] = np.std(distances)
     return stats
 
+
 def run_tsp(nb_cities_per_tsp):
     optimal_distances, random_distances, ai_distances = [], [], []
     optimal_ai_output_count, optimal_random_output_count = 0, 0
@@ -153,7 +155,7 @@ def run_tsp(nb_cities_per_tsp):
         print("======================================================================================================================")
         cities = generate_tsp_instance(nb_cities_per_tsp)
 
-        # print generated tsp 
+        # print generated tsp
         print("========== ORIGINAL CITIES ==========")
         print(cities)
 
@@ -183,7 +185,7 @@ def run_tsp(nb_cities_per_tsp):
             optimal_ai_output_count += 1
         if nb_cities_per_tsp < 10 and math.isclose(optimal_d, random_d, abs_tol=0.01):
             optimal_random_output_count += 1
-    
+
     print("======================================== FINAL STATS =========================================")
     if nb_cities_per_tsp < 10:
         print("========== OPTIMAL SOLUTIONS STATS ==========")
@@ -199,11 +201,10 @@ def run_tsp(nb_cities_per_tsp):
         print(optimal_ai_output_count)
 
 
-
-
 def main():
     # will run brute force solution if number of city < 10
-    run_tsp(7)
+    run_tsp(100)
+
 
 if __name__ == "__main__":
     main()
